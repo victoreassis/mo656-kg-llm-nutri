@@ -59,6 +59,9 @@ Você é um gerador de consultas SPARQL para um grafo RDF de alimentos e nutrien
 - Gere consultas SPARQL baseadas na pergunta do usuário.
 - Siga rigorosamente os padrões e propriedades do grafo RDF fornecido.
 - Não invente propriedades, classes ou estruturas.
+- Quando a pergunta envolver nutrientes informe o nutriente na resposta.
+- Sempre incluir a descrição do alimento (rdfs:label) na resposta.
+- Entender caloria como a propriedade Energia_kcal.
 - Retorne SOMENTE a consulta SPARQL, sem explicações, markdown, sem '''sparql''', '''sql'''.
 
 ## Exemplos de perguntas
@@ -73,11 +76,11 @@ Você é um gerador de consultas SPARQL para um grafo RDF de alimentos e nutrien
 - os alimentos estão em porção de 100g, sempre traga os valores para 100g.
 - Se o usuário pedir uma porção diferente, ignore e traga os valores para 100g.
 - Para perguntas como "quais alimentos são ricos em proteína", retorne alimentos que tenham mais de 10g de proteína por porção.
+- Para perguntas como "quais alimentos são ricos em potássio", retorne alimentos que tenham mais de 400g de potássio por porção.
 - Não faça cálculos ou binds de valores, traga os valores originais do grafo.
 - não procure pela descrição do alimento, procure pelo nome do alimento. SIGA ESSA REGRA RIGOROSAMENTE.
 - Use filtros para restringir resultados conforme a pergunta.
 - considere que os alimentos tipicamente consumidos cozidos, como arroz, feijão, carnes e legumes devem ser buscados em sua forma cozida, ignorando a forma crua.
-nao use rdfs labels, se atenha ao grafo.
 - as consultas devem sempre retornar a descrição do alimento (rdfs:label) e não a URI.
 ## Ontologia simplificada
 {schema}
@@ -92,7 +95,7 @@ nao use rdfs labels, se atenha ao grafo.
     chat_completion = client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
         model="llama-3.3-70b-versatile",
-        temperature=0
+        temperature=0.5
     )
 
     resultado = chat_completion.choices[0].message.content.strip()
@@ -138,11 +141,9 @@ def responder(pergunta):
 
     - os valores na consulta SPARQL são para 100g do alimento.
     - Se a pergunta envolver porções diferentes de 100g, faça os cálculos necessários para ajustar os valores.
-    Interprete a resposta recebida do grafo e responda de forma clara e objetiva.
+    Interprete a resposta recebida do grafo e responda de forma clara e objetiva, não espere que o resultado seja uma frase pronta.
     Não traga explicações, apenas a resposta direta.
-    Se a resposta for [] vazia, responda "NÃO SEI"
-    Se a resposta não trouxer informações relevantes, responda "CONTEXTO INSUFICIENTE PARA RESPONDER A PERGUNTA"
-    - interprete os resultados e responda de forma clara e objetiva. não espere que o resultado seja uma frase pronta.
+    Se a resposta for [] vazia, responda "NÃO SEI".
     """
 
     chat_completion = client.chat.completions.create(
@@ -158,4 +159,12 @@ def responder(pergunta):
 
 # 🔥 Teste
 # responder("quais frutas são ricas em potássio?")
-responder("quais aliemntos são ricos em proteína?")
+# responder("quais alimentos são ricos em proteína?")
+# responder("quantas calorias no Azeite, de oliva, extra virgem?")
+
+# Pergunta direta para a LLM sem KG
+# print(client.chat.completions.create(
+#     messages=[{"role": "user", "content": "quais frutas são ricas em potássio?"}],
+#     model="llama-3.3-70b-versatile",
+#     temperature=2
+# ).choices[0].message.content.strip())
