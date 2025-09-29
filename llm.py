@@ -1,13 +1,16 @@
 from rdflib import Graph
 from groq import Groq
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
+GROQ_TOKEN = os.getenv('GROQ_TOKEN')
 
 # Carrega grafo RDF já salvo
 g = Graph()
 g.parse("grafo_taco_teste.ttl", format="turtle")
 
 # Configura Groq
-GROQ_TOKEN = "gsk_your_groq_api_token_here"
 client = Groq(api_key=GROQ_TOKEN)
 
 grupo_alimentar = ["Cereais e derivados", "Verduras, hortaliças e derivados", "Frutas e derivados", "Gorduras e óleos", "Carnes e derivados", "Pescados e frutos do mar", "Leite e derivados", "Bebidas (alcoólicas e não alcoólicas)", "Ovos e derivados", "Produtos açucarados", "Miscelâneas", "Outros alimentos industrializados", "Alimentos preparados", "Leguminosas e derivados", "Nozes e sementes"]
@@ -154,4 +157,5 @@ def responder(pergunta):
 
 
 # 🔥 Teste
-responder("quais frutas são ricas em potássio?")
+# responder("quais frutas são ricas em potássio?")
+responder("quais aliemntos são ricos em proteína?")
