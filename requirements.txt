@@ -1,0 +1,7 @@
+rdflib
+groq
+requests
+beautifulsoup4
+pandas
+openpyxl
+python-dotenv
