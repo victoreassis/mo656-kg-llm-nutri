@@ -62,6 +62,7 @@ Você é um gerador de consultas SPARQL para um grafo RDF de alimentos e nutrien
 - Quando a pergunta envolver nutrientes informe o nutriente na resposta.
 - Sempre incluir a descrição do alimento (rdfs:label) na resposta.
 - Entender caloria como a propriedade Energia_kcal.
+- Aplicar filtro de expressão regular para encontrar APENAS o ínicio da descrição do alimento (rdfs:label)
 - Retorne SOMENTE a consulta SPARQL, sem explicações, markdown, sem '''sparql''', '''sql'''.
 
 ## Exemplos de perguntas
@@ -161,6 +162,7 @@ def responder(pergunta):
 # responder("quais frutas são ricas em potássio?")
 # responder("quais alimentos são ricos em proteína?")
 # responder("quantas calorias no Azeite, de oliva, extra virgem?")
+responder("quantas calorias tem a vitela?")
 
 # Pergunta direta para a LLM sem KG
 # print(client.chat.completions.create(
