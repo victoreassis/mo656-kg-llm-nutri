@@ -50,20 +50,10 @@ def pergunta_para_sparql(pergunta, erro_feedback=None):
         ns1:Vitamina_C_mg 0.0 ;
         ns1:Zinco_mg 0.0 ;
         ns1:perteneceAoGrupo ns1:gorduras_e_%C3%B3leos .
-    """   
+    """
+   
     prompt = f"""
 Você é um gerador de consultas SPARQL para um grafo RDF de alimentos e nutrientes.
-
-## Instruções Gerais
-- estes são os grupos alimentares presentes no grafo: {grupo_alimentar}
-- Gere consultas SPARQL baseadas na pergunta do usuário.
-- Siga rigorosamente os padrões e propriedades do grafo RDF fornecido.
-- Não invente propriedades, classes ou estruturas.
-- Quando a pergunta envolver nutrientes informe o nutriente na resposta.
-- Sempre incluir a descrição do alimento (rdfs:label) na resposta.
-- Entender caloria como a propriedade Energia_kcal.
-- Aplicar filtro de expressão regular para encontrar APENAS o ínicio da descrição do alimento (rdfs:label)
-- Retorne SOMENTE a consulta SPARQL, sem explicações, markdown, sem '''sparql''', '''sql'''.
 
 ## Exemplos de perguntas
 
@@ -71,18 +61,28 @@ Você é um gerador de consultas SPARQL para um grafo RDF de alimentos e nutrien
 - "Qual o teor de ferro na banana?"
 - "Liste os alimentos do grupo cereal."
 
-# regras
+## Regras
+
+- Estes são os grupos alimentares presentes no grafo: {grupo_alimentar}
+- Gere consultas SPARQL baseadas na pergunta do usuário.
+- Siga rigorosamente os padrões e propriedades do grafo RDF fornecido.
+- Não invente propriedades, classes ou estruturas.
+- Quando a pergunta envolver nutrientes informe o nutriente na resposta.
+- Entender caloria como a propriedade Energia_kcal.
+- Retorne SOMENTE a consulta SPARQL, sem explicações, markdown, sem '''sparql''', '''sql'''.
 - Sempre use prefixos conforme o grafo RDF.
-- os alimentos devem ser buscados pelo nome exato conforme estão no grafo, sem variações.
-- os alimentos estão em porção de 100g, sempre traga os valores para 100g.
+- Os alimentos estão em porção de 100g, sempre traga os valores para 100g.
 - Se o usuário pedir uma porção diferente, ignore e traga os valores para 100g.
 - Para perguntas como "quais alimentos são ricos em proteína", retorne alimentos que tenham mais de 10g de proteína por porção.
 - Para perguntas como "quais alimentos são ricos em potássio", retorne alimentos que tenham mais de 400g de potássio por porção.
 - Não faça cálculos ou binds de valores, traga os valores originais do grafo.
-- não procure pela descrição do alimento, procure pelo nome do alimento. SIGA ESSA REGRA RIGOROSAMENTE.
+- Aplicar filtro de expressão regular para encontrar APENAS o ínicio do nome alimento.
+- O filter é SEMPRE o último componente do WHERE em SPARQL.
+- Adicionar o grupo alimentar como componente do WHERE APENAS quando extritamente mencionada.
 - Use filtros para restringir resultados conforme a pergunta.
-- considere que os alimentos tipicamente consumidos cozidos, como arroz, feijão, carnes e legumes devem ser buscados em sua forma cozida, ignorando a forma crua.
-- as consultas devem sempre retornar a descrição do alimento (rdfs:label) e não a URI.
+- Considere que os alimentos tipicamente consumidos cozidos, como arroz, feijão, carnes e legumes devem ser buscados em sua forma cozida, ignorando a forma crua.
+- As consultas devem SEMPRE selecionar o nome do alimento, i.e, (?label).
+
 ## Ontologia simplificada
 {schema}
 
@@ -121,36 +121,35 @@ def responder(pergunta):
     print("🔎 Pergunta:", pergunta)
     erro_feedback = None
 
-    
     sparql = pergunta_para_sparql(pergunta, erro_feedback)
     print("\n⚡ Query SPARQL gerada:\n", sparql)
 
     resultados = executar_sparql(sparql)
     print("\n📊 Resultados brutos:", resultados)
 
-    contexto = "\n".join([str(r) for r in resultados])
     prompt = f"""
     Contexto extraído do grafo:
-    {contexto}
+    {resultados}
 
     Pergunta do usuário: {pergunta}
 
     Consulta SPARQL usada: {sparql}
-    - O usuário quer saber sobre alimentos e seus nutrientes.
-    - Responda com base apenas no contexto extraído do grafo e a pergunta.
-    - Responda somente com o conhecimento extraído do grafo.
 
-    - os valores na consulta SPARQL são para 100g do alimento.
+    - O usuário quer saber sobre alimentos e seus nutrientes.
+    - Responda somente com o conhecimento extraído do grafo.
+    - Os valores na consulta SPARQL são para 100g do alimento.
     - Se a pergunta envolver porções diferentes de 100g, faça os cálculos necessários para ajustar os valores.
-    Interprete a resposta recebida do grafo e responda de forma clara e objetiva, não espere que o resultado seja uma frase pronta.
-    Não traga explicações, apenas a resposta direta.
-    Se a resposta for [] vazia, responda "NÃO SEI".
+    - Interprete a resposta recebida do grafo e responda de forma clara e objetiva, não espere que o resultado seja uma frase pronta.
+    - Não traga explicações, apenas a resposta direta.
+    - Se o contexto extraído do grafo for igual a "[]", responda "NÃO SEI".
     """
+
+    print(f"\nPrompt final: {prompt}")
 
     chat_completion = client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
         model="llama-3.3-70b-versatile",
-        temperature=2
+        temperature=0
     )
 
     resposta = chat_completion.choices[0].message.content.strip()
@@ -162,7 +161,14 @@ def responder(pergunta):
 # responder("quais frutas são ricas em potássio?")
 # responder("quais alimentos são ricos em proteína?")
 # responder("quantas calorias no Azeite, de oliva, extra virgem?")
-responder("quantas calorias tem a vitela?")
+# print("\n".join([str(r) for r in []]))
+responder("quantas calorias tem o azeite?")
+# responder("quais os nutrientes do azeite?")
+# responder("quais os nutrientes da vitela?")
+
+# erro_feedback = None
+# sparql = pergunta_para_sparql("quais os nutrientes do azeite?", erro_feedback)
+# print(sparql)
 
 # Pergunta direta para a LLM sem KG
 # print(client.chat.completions.create(
