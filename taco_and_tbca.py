@@ -1,7 +1,5 @@
-import pandas as pd
-from rdflib import SKOS, Graph, Literal, RDF, RDFS, Namespace, URIRef, XSD, OWL, SKOS
-import os
-import urllib.parse
+from rdflib import SKOS, Graph,  Namespace, OWL, SKOS
+
 
 g = Graph()
 
