@@ -277,64 +277,55 @@ class Persona:
         gct = tmb * fator_atividade
         return gct
     
-    def definir_almoco(self):
-        if self.objetivo == "emagrecimento":
-            calorias_almoco = self.calcular_gasto_calorico_total() * 0.3
-        elif self.objetivo == "ganho de massa muscular":
-            calorias_almoco = self.calcular_gasto_calorico_total() * 0.4
-        else: # manutenção
-            calorias_almoco = self.calcular_gasto_calorico_total() * 0.35
-        
-        # TODO: Retornar uma query SPARQL para alimentos da refeição
+    def gerar_query_por_caloria(self, calorias_max, limite=5):
+        """
+        Gera uma query SPARQL que retorna alimentos com até calorias_max por 100g,
+        limitando o número de resultados.
+        """
+        query = f"""
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX taco: <http://mo656/taco/>
+        PREFIX tbca: <http://mo656/tbca/>
 
-        return calorias_almoco
-    
-    def definir_jantar(self):
-        if self.objetivo == "emagrecimento":
-            calorias_jantar = self.calcular_gasto_calorico_total() * 0.2
-        elif self.objetivo == "ganho de massa muscular":
-            calorias_jantar = self.calcular_gasto_calorico_total() * 0.3
-        else: # manutenção
-            calorias_jantar = self.calcular_gasto_calorico_total() * 0.25
-        
-        # TODO: Retornar uma query SPARQL para alimentos da refeição
+        SELECT ?label ?energia
+        WHERE {{
+            {{ ?alimento rdfs:label ?label ; taco:Energia_kcal ?energia . }}
+            UNION
+            {{ ?alimento rdfs:label ?label ; tbca:Energia_kcal ?energia . }}
+            FILTER(?energia <= {calorias_max})
+        }}
+        LIMIT {limite}
+        """
+        return query
 
-        return calorias_jantar
-    
-    def definir_lanches(self):
-        if self.objetivo == "emagrecimento":
-            calorias_lanches = self.calcular_gasto_calorico_total() * 0.1
-        elif self.objetivo == "ganho de massa muscular":
-            calorias_lanches = self.calcular_gasto_calorico_total() * 0.1
-        else: # manutenção
-            calorias_lanches = self.calcular_gasto_calorico_total() * 0.1
-
-        # TODO: Retornar uma query SPARQL para alimentos da refeição
-
-        return calorias_lanches
-    
     def definir_refeicoes(self):
-        # valor calorico total (%)
-        # cafe da manha = 25 
-        # lanche da manha = 5
-        # almoco = 30
-        # lanche da tarde = 10
-        # jantar = 25
-        # ceia = 5
-
-        return self
+        """
+        Retorna queries SPARQL para cada refeição, filtrando alimentos por calorias.
+        """
+        calorias = {
+            "cafe_da_manha": self.calcular_gasto_calorico_total() * 0.25,
+            "lanche_da_manha": self.calcular_gasto_calorico_total() * 0.05,
+            "almoco": self.calcular_gasto_calorico_total() * 0.3,
+            "lanche_da_tarde": self.calcular_gasto_calorico_total() * 0.1,
+            "jantar": self.calcular_gasto_calorico_total() * 0.25,
+            "ceia": self.calcular_gasto_calorico_total() * 0.05,
+        }
+        queries = {}
+        for refeicao, cal in calorias.items():
+            queries[refeicao] = self.gerar_query_por_caloria(cal, limite=5)
+        return queries
     
 # Exemplo de uso
 personaA = Persona(
     70.8, 1.61, "feminino", 22, "leve", "nenhuma", "emagrecimento", 5
 )
 
-print(personaA.definir_almoco())
+print(personaA.definir_refeicoes())
 
-personaB = Persona(
-    70.8, 1.61, "feminino", 22, "leve", "nenhuma", "ganho de massa muscular", 5
-)
+#personaB = Persona(
+#    70.8, 1.61, "feminino", 22, "leve", "nenhuma", "ganho de massa muscular", 5
+#)
 
-print(personaB.definir_almoco())
+#print(personaB.definir_refeicoes())
 
 
