@@ -5,14 +5,15 @@ import urllib.parse
 
 from groq import Groq
 
-if not os.path.exists("grafo_taco_teste.ttl"):
+if not os.path.exists("grafo_taco.ttl"):
 
     def criar_uri_segura(nome, ns):
         nome_limpo = nome.replace(" ", "_").replace(",", "").replace("-", "_").lower()
+        nome_limpo = nome_limpo.replace("(", "").replace(")", "").replace("/", "_").replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ç", "c").replace("ã", "a").replace("õ", "o").replace("â", "a").replace("ê", "e").replace("ô", "o")
         return URIRef(ns[urllib.parse.quote(nome_limpo)])
 
     # Carregar planilha
-    file_path = "taco_tratada.xlsx"
+    file_path = "C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\taco_tratada.xlsx"
     df = pd.read_excel(file_path)
 
     # Criar grafo
@@ -20,7 +21,7 @@ if not os.path.exists("grafo_taco_teste.ttl"):
 
     # Namespaces
     TACO = Namespace("http://mo656/taco/")
-
+    g.bind("taco", TACO)
     # relacionamentos
     g.add((TACO.perteneceAoGrupo, RDF.type, RDF.Property))
     #grupos alimentares
@@ -63,11 +64,11 @@ if not os.path.exists("grafo_taco_teste.ttl"):
                         print(f"Valor inválido para {linha} - {nutriente}: {df.iloc[i, j]}")
 
 
-    g.serialize("grafo_taco_teste.ttl", format="turtle")
+    g.serialize("grafo_taco.ttl", format="turtle")
 
 # Carregar grafo salvo
 g = Graph()
-g.parse("grafo_taco_teste.ttl", format="turtle")
+g.parse("C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\grafo_taco.ttl", format="turtle")
 
 
 #consultar grafo com SPARQL
