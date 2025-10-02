@@ -7,8 +7,8 @@ load_dotenv()
 GROQ_TOKEN = os.getenv('GROQ_TOKEN')
 
 # Carrega grafo RDF já salvo
-g = Graph()
-g.parse("grafo_taco_teste.ttl", format="turtle")
+#g = Graph()
+#g.parse("grafo_taco_tbca.ttl", format="turtle")
 
 # Configura Groq
 client = Groq(api_key=GROQ_TOKEN)
@@ -21,35 +21,83 @@ def pergunta_para_sparql(pergunta, erro_feedback=None):
     """
    
     schema = """
-    @prefix ns1: <http://mo656/taco/> .
     @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
     @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+    @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+    @prefix taco: <http://mo656/taco/> .
+    @prefix tbca: <http://mo656/tbca/> .
     @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-    <http://mo656/taco/%C3%B3leo_de_baba%C3%A7u> a ns1:Alimento ;
+    <http://mo656/taco/%C3%B3leo_de_baba%C3%A7u> a taco:Alimento ;
         rdfs:label "Óleo, de babaçu" ;
-        ns1:Carboidrato_g 0.0 ;
-        ns1:Cobre_mg 0.0 ;
-        ns1:Colesterol_mg 0.0 ;
-        ns1:Cálcio_mg 0.0 ;
-        ns1:Energia_kcal 884.0 ;
-        ns1:Ferro_mg 0.0 ;
-        ns1:Fibra_alimentar_g 0.0 ;
-        ns1:Fósforo_mg 0.0 ;
-        ns1:Lipídeos_g 100.0 ;
-        ns1:Magnésio_mg 0.0 ;
-        ns1:Manganês_mg 0.0 ;
-        ns1:Niacina_mg 0.0 ;
-        ns1:Piridoxina_mg 0.0 ;
-        ns1:Potássio_mg 0.0 ;
-        ns1:Proteína_g 0.0 ;
-        ns1:Retinol_mcg 0.0 ;
-        ns1:Riboflavina_mg 0.0 ;
-        ns1:Sódio_mg 0.0 ;
-        ns1:Tiamina_mg 0.0 ;
-        ns1:Vitamina_C_mg 0.0 ;
-        ns1:Zinco_mg 0.0 ;
-        ns1:perteneceAoGrupo ns1:gorduras_e_%C3%B3leos .
+        taco:Carboidrato_g 0.0 ;
+        taco:Cinzas_g 0.0 ;
+        taco:Cobre_mg 0.0 ;
+        taco:Colesterol_mg 0.0 ;
+        taco:Cálcio_mg 0.0 ;
+        taco:Energia_kcal 884.0 ;
+        taco:Ferro_mg 0.0 ;
+        taco:Fibra_alimentar_g 0.0 ;
+        taco:Fósforo_mg 0.0 ;
+        taco:Lipídeos_g 100.0 ;
+        taco:Magnésio_mg 0.0 ;
+        taco:Manganês_mg 0.0 ;
+        taco:Niacina_mg 0.0 ;
+        taco:Piridoxina_mg 0.0 ;
+        taco:Potássio_mg 0.0 ;
+        taco:Proteína_g 0.0 ;
+        taco:Retinol_mcg 0.0 ;
+        taco:Riboflavina_mg 0.0 ;
+        taco:Sódio_mg 0.0 ;
+        taco:Tiamina_mg 0.0 ;
+        taco:Umidade 0.0 ;
+        taco:Vitamina_C_mg 0.0 ;
+        taco:Zinco_mg 0.0 ;
+        taco:perteneceAoGrupo taco:gorduras_e_%C3%B3leos .
+
+    tbca:abacate_polpa_in_natura_brasil a tbca:Alimento ;
+        rdfs:label "Abacate, polpa, in natura, Brasil" ;
+        tbca:Acidos_graxos_monoinsaturados_g 3.18 ;
+        tbca:Acidos_graxos_poliinsaturados_g 1.04 ;
+        tbca:Acidos_graxos_saturados_g 1.7 ;
+        tbca:Acidos_graxos_trans_g 0.0 ;
+        tbca:Acucar_de_adicao_g 0.0 ;
+        tbca:Alcool_g 0.0 ;
+        tbca:Alfa_tocoferol_%28Vitamina_E%29_mg 0.02 ;
+        tbca:Calcio_mg 7.16 ;
+        tbca:Carboidrato_disponivel_g 1.81 ;
+        tbca:Carboidrato_total_g 5.84 ;
+        tbca:Cinzas_g 0.47 ;
+        tbca:Cobre_mg 0.12 ;
+        tbca:Colesterol_mg 0.0 ;
+        tbca:Energia_kJ 312.0 ;
+        tbca:Energia_kcal 76.0 ;
+        tbca:Equivalente_de_folato_mcg 41.5 ;
+        tbca:Ferro_mg 0.18 ;
+        tbca:Fibra_alimentar_g 4.03 ;
+        tbca:Fosforo_mg 18.5 ;
+        tbca:Gordura_de_adicao_g 0.0 ;
+        tbca:Lipidios_g 6.21 ;
+        tbca:Magnesio_mg 17.0 ;
+        tbca:Niacina_mg 0.0 ;
+        tbca:Potassio_mg 174.0 ;
+        tbca:Proteina_animal_g 0.0 ;
+        tbca:Proteina_g 1.15 ;
+        tbca:Proteina_vegetal_g 1.15 ;
+        tbca:Riboflavina_mg 0.04 ;
+        tbca:Sal_de_adicao_g 0.0 ;
+        tbca:Selenio_mcg 0.2 ;
+        tbca:Sodio_mg 0.0 ;
+        tbca:Tiamina_mg 0.0 ;
+        tbca:Umidade_g 86.3 ;
+        tbca:Vitamina_A_%28RAE%29_mcg 3.11 ;
+        tbca:Vitamina_A_%28RE%29_mcg 6.21 ;
+        tbca:Vitamina_B12_mcg 0.0 ;
+        tbca:Vitamina_B6_mg 0.0 ;
+        tbca:Vitamina_C_mg 7.32 ;
+        tbca:Vitamina_D_mcg 0.0 ;
+        tbca:Zinco_mg 0.23 ;
+        tbca:perteneceAoGrupo tbca:frutas_e_derivados .
     """
    
     prompt = f"""
@@ -82,6 +130,7 @@ Você é um gerador de consultas SPARQL para um grafo RDF de alimentos e nutrien
 - Use filtros para restringir resultados conforme a pergunta.
 - Considere que os alimentos tipicamente consumidos cozidos, como arroz, feijão, carnes e legumes devem ser buscados em sua forma cozida, ignorando a forma crua.
 - As consultas devem SEMPRE selecionar o nome do alimento, i.e, (?label).
+- Tentar encontrar o alimento no namespace TACO e TBCA.
 
 ## Ontologia simplificada
 {schema}
@@ -111,7 +160,6 @@ def executar_sparql(query):
         return list(results)
     except Exception as e:
         return [("Erro", str(e))]
-
 
 def responder(pergunta):
     """
@@ -162,7 +210,7 @@ def responder(pergunta):
 # responder("quais alimentos são ricos em proteína?")
 # responder("quantas calorias no Azeite, de oliva, extra virgem?")
 # print("\n".join([str(r) for r in []]))
-responder("quantas calorias tem o azeite?")
+# responder("quantas calorias tem a vitela?")
 # responder("quais os nutrientes do azeite?")
 # responder("quais os nutrientes da vitela?")
 
@@ -176,3 +224,117 @@ responder("quantas calorias tem o azeite?")
 #     model="llama-3.3-70b-versatile",
 #     temperature=2
 # ).choices[0].message.content.strip())
+
+# Criar as queries SPARQL
+# Elabore um cardápio de dieta de emagrecimento para uma mulher adulta, com peso 70,8kg, altura de 1,61 m, idade 22 anos, nível de atividade física leve.
+# Informe qual é a perda de peso calculada por mês, a partir da dieta calculada, e em quanto tempo essa mulher alcançaria um IMC considerado adequado
+
+class Persona:
+    def __init__(self, peso, altura, sexo, idade, nivel_atividade_fisica, restricao_alimentar, objetivo, quantidade_refeicoes):
+        self.peso = peso # em kg
+        self.altura = altura # em metros
+        self.sexo = sexo # masculino ou feminino
+        self.idade = idade # em anos
+        self.nivel_atividade_fisica = nivel_atividade_fisica # ex: sedentário, leve, moderado, intenso
+        self.restricao_alimentar = restricao_alimentar # ex: nenhuma, vegetariana, vegana, intolerância à lactose, doença celíaca
+        self.objetivo = objetivo # ex: emagrecimento, ganho de massa muscular, manutenção
+        self.quantidade_refeicoes = quantidade_refeicoes # por dia
+    
+    # Cálculo do IMC
+    def calcular_imc(self):
+        imc = self.peso / (self.altura ** 2)
+        return imc
+    
+    # Classificação do IMC
+    def classificar_imc(self):  
+        imc = self.calcular_imc()
+        if imc < 18.5:
+            return "Abaixo do peso"
+        elif 18.5 <= imc < 24.9:
+            return "Peso normal"
+        elif 25 <= imc < 29.9:
+            return "Sobrepeso"
+        else:
+            return "Obesidade"
+        
+    def calcular_taxa_metabolica_basal(self):
+        if self.sexo == "masculino":
+            tmb = 88.36 + (13.4 * self.peso) + (4.8 * (self.altura * 100)) - (5.7 * self.idade)
+        else:
+            tmb = 447.6 + (9.2 * self.peso) + (3.1 * (self.altura * 100)) - (4.3 * self.idade)
+        return tmb
+    
+    def calcular_gasto_calorico_total(self):
+        tmb = self.calcular_taxa_metabolica_basal()
+        if self.nivel_atividade_fisica == "sedentário":
+            fator_atividade = 1.2
+        elif self.nivel_atividade_fisica == "leve":
+            fator_atividade = 1.375
+        elif self.nivel_atividade_fisica == "moderado":
+            fator_atividade = 1.55
+        else: # intenso
+            fator_atividade = 1.725
+        gct = tmb * fator_atividade
+        return gct
+    
+    def definir_almoco(self):
+        if self.objetivo == "emagrecimento":
+            calorias_almoco = self.calcular_gasto_calorico_total() * 0.3
+        elif self.objetivo == "ganho de massa muscular":
+            calorias_almoco = self.calcular_gasto_calorico_total() * 0.4
+        else: # manutenção
+            calorias_almoco = self.calcular_gasto_calorico_total() * 0.35
+        
+        # TODO: Retornar uma query SPARQL para alimentos da refeição
+
+        return calorias_almoco
+    
+    def definir_jantar(self):
+        if self.objetivo == "emagrecimento":
+            calorias_jantar = self.calcular_gasto_calorico_total() * 0.2
+        elif self.objetivo == "ganho de massa muscular":
+            calorias_jantar = self.calcular_gasto_calorico_total() * 0.3
+        else: # manutenção
+            calorias_jantar = self.calcular_gasto_calorico_total() * 0.25
+        
+        # TODO: Retornar uma query SPARQL para alimentos da refeição
+
+        return calorias_jantar
+    
+    def definir_lanches(self):
+        if self.objetivo == "emagrecimento":
+            calorias_lanches = self.calcular_gasto_calorico_total() * 0.1
+        elif self.objetivo == "ganho de massa muscular":
+            calorias_lanches = self.calcular_gasto_calorico_total() * 0.1
+        else: # manutenção
+            calorias_lanches = self.calcular_gasto_calorico_total() * 0.1
+
+        # TODO: Retornar uma query SPARQL para alimentos da refeição
+
+        return calorias_lanches
+    
+    def definir_refeicoes(self):
+        # valor calorico total (%)
+        # cafe da manha = 25 
+        # lanche da manha = 5
+        # almoco = 30
+        # lanche da tarde = 10
+        # jantar = 25
+        # ceia = 5
+
+        return self
+    
+# Exemplo de uso
+personaA = Persona(
+    70.8, 1.61, "feminino", 22, "leve", "nenhuma", "emagrecimento", 5
+)
+
+print(personaA.definir_almoco())
+
+personaB = Persona(
+    70.8, 1.61, "feminino", 22, "leve", "nenhuma", "ganho de massa muscular", 5
+)
+
+print(personaB.definir_almoco())
+
+
