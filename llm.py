@@ -1,129 +1,112 @@
+# seu_arquivo_principal.py (VERSÃO CORRIGIDA)
+
 from rdflib import Graph
 from groq import Groq
 from dotenv import load_dotenv
 import os
-from persona import Persona
+from persona import Persona # Importa a classe do outro arquivo
 
-# Criar uma persona
-personaA = Persona(55, 1.61, "feminino", 22, "pouco ativo", "emagrecimento", 3)
-
-print("Persona A:")
-
-print(personaA.objetivo)
-
-# Calcular IMC
-imc = personaA.calcular_imc()
-print(f"IMC: {imc:.2f}")
-
-# Classificar IMC
-classificacao = personaA.classificar_imc()
-print(f"Classificação: {classificacao}")
-
-# Calcular TMB
-tmb = personaA.calcular_taxa_metabolica_basal()
-print(f"TMB: {tmb:.2f}")
-
-# Calcular GET
-get = personaA.calcular_gasto_energetico_total()
-print(f"GET: {get:.2f}")
-
-print(f"Número de refeições diárias: {personaA.quantidade_refeicoes}")
-
-# Gerar queries para refeições
-queries_refeicoes = personaA.definir_refeicoes()
-for refeicao, query in queries_refeicoes.items():
-    print(f"\nQuery para {refeicao}:\n{query}")
-
-
+# --- SETUP INICIAL ---
 load_dotenv()
+# GROQ_TOKEN = os.getenv("GROQ_API_KEY") # Forma mais segura de carregar a chave
 GROQ_TOKEN = "gsk_your_groq_api_token_here"
-
-# Carrega grafo RDF já salvo
-g = Graph()
-g.parse("C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\grafo_taco_tbca.ttl", format="turtle")
-
-# Configura Groq
 client = Groq(api_key=GROQ_TOKEN)
 
-grupo_alimentar = ["Cereais e derivados", "Verduras, hortaliças e derivados", "Frutas e derivados", "Gorduras e óleos", "Carnes e derivados", "Pescados e frutos do mar", "Leite e derivados", "Bebidas (alcoólicas e não alcoólicas)", "Ovos e derivados", "Produtos açucarados", "Miscelâneas", "Outros alimentos industrializados", "Alimentos preparados", "Leguminosas e derivados", "Nozes e sementes"]
+# Carrega o grafo unificado
+g = Graph()
+g.parse("C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\grafo_unificado.ttl", format="turtle")
 
+# --- FUNÇÕES AUXILIARES ---
 def executar_sparql(query):
-    """
-    Executa a query no grafo RDF e retorna resultados
-    """
     try:
         results = g.query(query)
-        return list(results)
+        # MELHORIA: Retorna uma lista de dicionários, mais fácil de usar
+        return [dict(row.items()) for row in results]
     except Exception as e:
-        return [("Erro", str(e))]
+        print(f"ERRO na query SPARQL: {e}")
+        return []
 
-def responder(pergunta):
-    """
-    Pipeline: pergunta -> SPARQL -> resultado -> resposta em linguagem natural
-    Tenta adaptar a consulta SPARQL caso ocorra erro, enviando o erro como feedback para a LLM.
-    """
-    print("🔎 Pergunta:", pergunta)
-    refeicoes = {}
-    sparql = {}
+def formatar_contexto_refeicoes(refeicoes_dict: dict) -> str:
+    contexto_formatado = ""
+    for refeicao, resultados in refeicoes_dict.items():
+        titulo_refeicao = refeicao.replace("_", " ").title()
+        contexto_formatado += f"### Opções para {titulo_refeicao}\n"
+        if not resultados:
+            contexto_formatado += "- Nenhuma opção de alimento encontrada.\n\n"
+            continue
+        contexto_formatado += "| Alimento | Calorias (por 100g) | Fonte |\n"
+        contexto_formatado += "|---|---|---|\n"
+        for item in resultados:
+            # CORREÇÃO: Acessando os dados pelo nome da variável
+            label = item.get('label', 'N/A')
+            energia = item.get('energiaKcal', 'N/A')
+            fonte = item.get('fonte', 'N/A')
+            contexto_formatado += f"| {label} | {energia} | {fonte} |\n"
+        contexto_formatado += "\n"
+    return contexto_formatado
+
+def responder(pergunta, queries_refeicoes):
+    print("🔎 Pergunta para a LLM:", pergunta)
+    
+    refeicoes_resultados = {}
     for refeicao, query in queries_refeicoes.items():
-        refeicoes[refeicao] = executar_sparql(query)
-        sparql[refeicao] = query
-        print("\n⚡ Query SPARQL gerada:\n", query)
+        refeicoes_resultados[refeicao] = executar_sparql(query)
 
+    if not any(refeicoes_resultados.values()):
+        resposta_final = "NÃO SEI. Não foi possível encontrar alimentos no grafo que atendam aos critérios."
+        print(f"\n🤖 Resposta final (sem LLM): {resposta_final}")
+        return resposta_final
+
+    contexto_formatado = formatar_contexto_refeicoes(refeicoes_resultados)
     
     prompt = f"""
-    Contexto extraído do grafo:
-    {refeicoes}
+    ## PERSONA
+    Você é uma nutricionista virtual que cria planos alimentares personalizados com base em dados das tabelas TACO e TBCA, com foco na culinária brasileira.
 
-    Pergunta do usuário: {pergunta}
+    ## CONTEXTO - ALIMENTOS DISPONÍVEIS
+    A seguir uma lista de alimentos pré-selecionados, separados por refeição. Os valores calóricos são por 100g.
 
-    Consulta SPARQL usada: {sparql}
+    {contexto_formatado}
+    ## TAREFA E PERGUNTA DO USUÁRIO
+    Com base estritamente nos alimentos do CONTEXTO, responda à pergunta do usuário:
+    "{pergunta}"
 
-    - O usuário quer saber sobre alimentos e seus nutrientes.
-    - Responda somente com o conhecimento extraído do grafo.
-    - Os valores na consulta SPARQL são para 100g do alimento.
-    - Se a pergunta envolver porções diferentes de 100g, faça os cálculos necessários para ajustar os valores.
-    - Interprete a resposta recebida do grafo e responda de forma clara e objetiva, não espere que o resultado seja uma frase pronta.
-    - Não traga explicações, apenas a resposta direta.
-    - Se o contexto extraído do grafo for igual a "[]", responda "NÃO SEI".
+    ## REGRAS E FORMATO DA RESPOSTA
+    1. Crie um plano alimentar completo.
+    2. Siga rigorosamente as calorias totais para cada refeição. 
+    - Você DEVE calcular a porção em gramas de cada alimento para atingir o objetivo calórico.
+    - Você DEVE diminuir a quantidade Gramas, dos alimentos para que as calorias se adequem à re
+    3. Use apenas os alimentos do CONTEXTO.
+    4. Não invente valores nutricionais.
+    5. Formato: Apresente a dieta de forma clara. Para cada refeição, liste os alimentos, a porção em gramas e as calorias da porção. Exemplo:
+    **Café da Manhã (Total Aprox: 300 kcal)**
+    - Pão Francês: 70g (Aprox. 202 kcal)
+    - Queijo Minas Frescal: 30g (Aprox. 75 kcal)
+    6. Seja direta. Apenas o plano alimentar.
+    7. Se o contexto for insuficiente, informe isso claramente.
     """
-
-    print(f"\nPrompt final: {prompt}")
-
+    print(f"\nPrompt final enviado para a LLM:\n{prompt}")
+    
     chat_completion = client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
         model="llama-3.3-70b-versatile",
         temperature=0
     )
-
     resposta = chat_completion.choices[0].message.content.strip()
     print("\n🤖 Resposta final:", resposta)
     return resposta
 
-responder(personaA.gerar_pergunta())
 
-# 🔥 Teste
-# responder("quais frutas são ricas em potássio?")
-# responder("quais alimentos são ricos em proteína?")
-# responder("quantas calorias no Azeite, de oliva, extra virgem?")
-# print("\n".join([str(r) for r in []]))
-# responder("quantas calorias tem a vitela?")
-# responder("quais os nutrientes do azeite?")
-# responder("quais os nutrientes da vitela?")
+# 1. Criar a persona (usando os dados do seu exemplo de erro)
+personaA = Persona(peso=75, altura=1.65, sexo="feminino", idade=30, 
+                    nivel_atividade_fisica="pouco ativo", objetivo="emagrecimento", 
+                    quantidade_refeicoes=4)
 
-# erro_feedback = None
-# sparql = pergunta_para_sparql("quais os nutrientes do azeite?", erro_feedback)
-# print(sparql)
+# 2. Gerar o dicionário de queries SPARQL a partir da persona
+queries_para_llm = personaA.definir_refeicoes()
 
-# Pergunta direta para a LLM sem KG
-# print(client.chat.completions.create(
-#     messages=[{"role": "user", "content": "quais frutas são ricas em potássio?"}],
-#     model="llama-3.3-70b-versatile",
-#     temperature=2
-# ).choices[0].message.content.strip())
+# 3. Gerar a pergunta (prompt) para a LLM
+pergunta_para_llm = personaA.gerar_pergunta()
 
-# Criar as queries SPARQL
-# Elabore um cardápio de dieta de emagrecimento para uma mulher adulta, com peso 70,8kg, altura de 1,61 m, idade 22 anos, nível de atividade física leve.
-# Informe qual é a perda de peso calculada por mês, a partir da dieta calculada, e em quanto tempo essa mulher alcançaria um IMC considerado adequado
-
-
+# 4. Chamar a função principal que executa tudo
+resposta_da_dieta = responder(pergunta_para_llm, queries_para_llm)

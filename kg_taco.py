@@ -1,74 +1,113 @@
 import pandas as pd
-from rdflib import Graph, Literal, RDF, RDFS, Namespace, URIRef, XSD
+from rdflib import Graph, Literal, RDF, RDFS, Namespace, URIRef, XSD, OWL
 import os
 import urllib.parse
+import unicodedata
+import re
 
-from groq import Groq
 
-if not os.path.exists("grafo_taco.ttl"):
+def padronizar_nome(texto_original, tipo='propriedade'):
+    if not isinstance(texto_original, str): return ""
+    texto_sem_acentos = ''.join(c for c in unicodedata.normalize('NFD', texto_original)
+                                if unicodedata.category(c) != 'Mn')
+    palavras = re.findall(r'[a-zA-Z0-9]+', texto_sem_acentos)
+    if not palavras: return ""
+    palavras_capitalizadas = [palavra.capitalize() for palavra in palavras]
+    nome_upper_camel = "".join(palavras_capitalizadas)
+    if tipo in ['classe', 'individuo']: return nome_upper_camel
+    elif tipo == 'propriedade': return nome_upper_camel[0].lower() + nome_upper_camel[1:]
+    else: return nome_upper_camel
 
-    def criar_uri_segura(nome, ns):
-        nome_limpo = nome.replace(" ", "_").replace(",", "").replace("-", "_").lower()
-        nome_limpo = nome_limpo.replace("(", "").replace(")", "").replace("/", "_").replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ç", "c").replace("ã", "a").replace("õ", "o").replace("â", "a").replace("ê", "e").replace("ô", "o")
-        return URIRef(ns[urllib.parse.quote(nome_limpo)])
 
-    # Carregar planilha
+if not os.path.exists("C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\taco.ttl"):
+    print("Arquivo de grafo não encontrado. Iniciando a criação...")
+
     file_path = "C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\taco_tratada.xlsx"
-    df = pd.read_excel(file_path)
+    
+    try:
+        # Lendo o Excel e usando a primeira linha como cabeçalho (padrão)
+        print(f"Lendo o arquivo Excel de: {file_path}")
+        df = pd.read_excel(file_path)
+    except FileNotFoundError:
+        print(f"ERRO: Arquivo não encontrado em {file_path}")
+        exit()
 
-    # Criar grafo
+    # Padronização dinâmica dos Nomes das Colunas
+    colunas_para_renomear = {}
+    lista_nutrientes_padronizados = []
+    
+    for coluna_original in df.columns:
+        if coluna_original == df.columns[0]:
+            colunas_para_renomear[coluna_original] = "nome"
+        else:
+            coluna_padronizada = padronizar_nome(coluna_original, tipo='propriedade')
+            colunas_para_renomear[coluna_original] = coluna_padronizada
+            lista_nutrientes_padronizados.append(coluna_padronizada)
+            
+    df.rename(columns=colunas_para_renomear, inplace=True)
+    
+    print("Colunas do DataFrame padronizadas com sucesso!")
+    print("Nomes das colunas agora:", list(df.columns))
+
+    # Setup do Grafo e Namespaces
     g = Graph()
-
-    # Namespaces
     TACO = Namespace("http://mo656/taco/")
-    g.bind("taco", TACO)
-    # relacionamentos
-    g.add((TACO.perteneceAoGrupo, RDF.type, RDF.Property))
-    #grupos alimentares
-    grupo_alimentar = ["Cereais e derivados", "Verduras, hortaliças e derivados", "Frutas e derivados", "Gorduras e óleos", "Carnes e derivados", "Pescados e frutos do mar", "Leite e derivados", "Bebidas (alcoólicas e não alcoólicas)", "Ovos e derivados", "Produtos açucarados", "Miscelâneas", "Outros alimentos industrializados", "Alimentos preparados", "Leguminosas e derivados", "Nozes e sementes"]
+    g.bind("taco", TACO); g.bind("rdfs", RDFS); g.bind("rdf", RDF); g.bind("owl", OWL)
 
-    nutrientes = ["Umidade", "Cinzas_g" , "Energia_kcal", "Proteína_g", "Lipídeos_g", "Colesterol_mg", "Carboidrato_g", "Fibra_alimentar_g", "Cálcio_mg", "Magnésio_mg", "Manganês_mg", "Fósforo_mg", "Ferro_mg", "Sódio_mg", "Potássio_mg", "Cobre_mg", "Zinco_mg", "Retinol_mcg", "Tiamina_mg", "Riboflavina_mg", "Piridoxina_mg", "Niacina_mg", "Vitamina_C_mg"]
+    # Definição da Ontologia
+    g.add((TACO.Alimento, RDF.type, OWL.Class)); g.add((TACO.Alimento, RDFS.label, Literal("Alimento")))
+    g.add((TACO.GrupoAlimentar, RDF.type, OWL.Class)); g.add((TACO.GrupoAlimentar, RDFS.label, Literal("Grupo Alimentar")))
+    g.add((TACO.pertenceAoGrupo, RDF.type, OWL.ObjectProperty)); g.add((TACO.pertenceAoGrupo, RDFS.label, Literal("Pertence ao Grupo")))
 
-    # nutrientes como propriedades
-    for nutriente in nutrientes:
-        prop = TACO[nutriente]
-        g.add((prop, RDF.type, RDF.Property))
+    for nutriente_nome in lista_nutrientes_padronizados:
+        propriedade_uri = TACO[nutriente_nome]
+        g.add((propriedade_uri, RDF.type, OWL.DatatypeProperty))
+        g.add((propriedade_uri, RDFS.label, Literal(nutriente_nome)))
 
-    for i in range(len(df)):
-        linha = df.iloc[i, 0]
-        if linha in grupo_alimentar:
-            grupo_uri = criar_uri_segura(linha, TACO)
-            g.add((grupo_uri, RDF.type, TACO.GrupoAlimentar))
-            g.add((grupo_uri, RDFS.label, Literal(linha)))
+   
+    grupo_atual_uri = None
+    print("\nIniciando processamento das linhas da planilha...")
+    for index, row in df.iterrows():
+        nome_original = row['nome']
+        if pd.isna(nome_original): continue
 
-        # Adicionar alimentos 
-        elif pd.notna(linha): 
-                    
-            alimento_uri = criar_uri_segura(linha, TACO)
+        if pd.isna(row.iloc[1]): # Checa a segunda coluna para ver se é grupo
+            grupo_label = nome_original
+            grupo_padronizado = padronizar_nome(grupo_label, tipo='classe')
+            grupo_atual_uri = TACO[grupo_padronizado]
+            g.add((grupo_atual_uri, RDF.type, TACO.GrupoAlimentar))
+            g.add((grupo_atual_uri, RDFS.label, Literal(grupo_label, lang='pt')))
+            print(f"\n--- Processando Grupo: {grupo_label} ---")
+        else:
+            if grupo_atual_uri is None:
+                print(f"AVISO: Alimento '{nome_original}' encontrado sem um grupo. Pulando.")
+                continue
+            print(f"  - Processando Alimento: {nome_original}")
+            alimento_padronizado = padronizar_nome(nome_original, tipo='individuo')
+            alimento_uri = TACO[alimento_padronizado]
             g.add((alimento_uri, RDF.type, TACO.Alimento))
-            g.add((alimento_uri, RDFS.label, Literal(linha)))
-
-            if grupo_uri:
-                g.add((alimento_uri, TACO.perteneceAoGrupo, grupo_uri))
-
-            # Adicionar nutrientes ao alimento
-            for j in range(len(df.columns)):
-                nutriente = df.columns[j]
-                    
-                if nutriente in nutrientes:
-                    valor = df.iloc[i, j]
+            g.add((alimento_uri, RDFS.label, Literal(nome_original, lang='pt')))
+            g.add((alimento_uri, TACO.pertenceAoGrupo, grupo_atual_uri))
+            
+            for nutriente_coluna in lista_nutrientes_padronizados:
+                valor = row[nutriente_coluna]
+                if pd.notna(valor):
                     try:
-                        valor = float(valor)
-                        g.add((alimento_uri, TACO[nutriente], Literal(valor, datatype=XSD.decimal)))
-                    except (ValueError, TypeError):
-                        print(f"Valor inválido para {linha} - {nutriente}: {df.iloc[i, j]}")
+                        valor_numerico = float(str(valor).replace(',', '.'))
+                        g.add((alimento_uri, TACO[nutriente_coluna], Literal(valor_numerico, datatype=XSD.decimal)))
+                    except (ValueError, TypeError): pass
 
 
-    g.serialize("grafo_taco.ttl", format="turtle")
+    print("\nSerializando o grafo para o arquivo 'grafo_taco_final.ttl'...")
+    g.serialize(destination="C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\taco.ttl", format="turtle")
+    print("Grafo criado com sucesso!")
+
+else:
+    print("O arquivo 'taco.ttl' já existe. Nenhuma ação foi tomada.")
 
 # Carregar grafo salvo
 g = Graph()
-g.parse("C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\grafo_taco.ttl", format="turtle")
+g.parse("C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\taco.ttl", format="turtle")
 
 
 #consultar grafo com SPARQL
