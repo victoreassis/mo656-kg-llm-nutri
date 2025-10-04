@@ -1,8 +1,5 @@
-# persona.py (VERSÃO COM ORDENAÇÃO INTELIGENTE)
 
 class Persona:
-    # ... (todo o início da sua classe, __init__, calcular_imc, etc., continua igual)
-    # (código omitido por brevidade)
     def __init__(self, peso, altura, sexo, idade, nivel_atividade_fisica, objetivo, quantidade_refeicoes):
         self.peso = peso; self.altura = altura; self.sexo = sexo; self.idade = idade
         self.nivel_atividade_fisica = nivel_atividade_fisica; self.objetivo = objetivo
@@ -45,7 +42,7 @@ class Persona:
         grupos_selecionados = grupos_por_refeicao.get(nome_refeicao, [])
         filtro_grupos_values = "VALUES ?grupoLabel { " + " ".join(f'"{g}"' for g in grupos_selecionados) + " }"
         
-        # A query agora não tem NENHUM filtro ou ordenação por calorias.
+       
         query = f"""
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX taco: <http://mo656/taco/>
@@ -73,7 +70,7 @@ class Persona:
             ORDER BY ASC(?fonte) RAND()
             LIMIT {limite}
         """
-        print(query)
+
         return query
 
 
@@ -88,12 +85,10 @@ class Persona:
             """
         queries = {}
         for refeicao, cal in refeicoes.items():
-            # A chamada agora passa 'cal', as calorias totais da refeição
             queries[refeicao] = self.gerar_query_refeicao(refeicao, cal, limite=30, filtro_saude=filtro_saude)
         return queries
     
     def gerar_pergunta(self):
-        # ... (este método já está correto, sem alterações)
         refeicoes_map = {"cafe_da_manha": "Café da Manhã", "lanche_da_manha": "Lanche da Manhã", "almoco": "Almoço", "lanche_da_tarde": "Lanche da Tarde", "jantar": "Jantar", "ceia": "Ceia"}
         refeicoes_dict = self._definir_distribuicao_calorica()
         refeicoes_str = ", ".join([f"{refeicoes_map[nome]} com aproximadamente {int(cal)} kcal" for nome, cal in refeicoes_dict.items()])
