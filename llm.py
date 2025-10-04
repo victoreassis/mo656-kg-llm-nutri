@@ -15,7 +15,7 @@ client = Groq(api_key=GROQ_TOKEN)
 
 # Carrega o grafo unificado
 g = Graph()
-g.parse(os.path.abspath("grafo_unificado.ttl"), format="turtle")
+g.parse(os.path.abspath("C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\grafo_unificado.ttl"), format="turtle")
 
 # --- FUNÇÕES AUXILIARES ---
 def executar_sparql(query):
@@ -61,6 +61,7 @@ def responder(pergunta, queries_refeicoes):
     contexto_formatado = formatar_contexto_refeicoes(refeicoes_resultados)
     
     prompt = f"""
+
     ## PERSONA
     Você é uma nutricionista virtual que cria planos alimentares personalizados com base em dados das tabelas TACO e TBCA, com foco na culinária brasileira.
 
@@ -73,6 +74,7 @@ def responder(pergunta, queries_refeicoes):
     "{pergunta}"
 
     ## REGRAS E FORMATO DA RESPOSTA
+    a resposta deve ser 20% mais baixa que o total de calorias sugerido{personaA.calcular_gasto_energetico_total()} kcal, considerando o objetivo de emagrecimento.
     1. Crie um plano alimentar completo.
     2. Siga rigorosamente as calorias totais para cada refeição. 
     - Você DEVE calcular a porção em gramas de cada alimento para atingir o objetivo calórico.
@@ -85,6 +87,16 @@ def responder(pergunta, queries_refeicoes):
     - Queijo Minas Frescal: 30g (Aprox. 75 kcal)
     6. Seja direta. Apenas o plano alimentar.
     7. Se o contexto for insuficiente, informe isso claramente.
+    Selecione alimentos tipicamente consumidos nas refeições brasileiras, assim, não coloque alimentos como "Coca-Cola" ou "Chocolate" em refeições como café da manhã ou almoço. ou nhoque com molho de tomate no café da manhã, lanche ou ceia
+    Exemplo:
+    nhoque, molho de tomate, tomate purê, refrigerante, chocolate, sorvete, pizza, hambúrguer, batata frita, salgadinhos, doces, bolos, pupunha, acarajé, feijoada, churrasco, coxinha, brigadeiro, quindim, cocada, pamonha, curau, canjica.
+    Café, apenas se for a bebida, não o pó.
+    Carne, apenas se for cozida, grelhada, assada ou em forma de bife. Não coloque carne crua.
+    Não coloque alimentos de salada em todas as refeições, como alface, tomate, cenoura ralada, etc. Coloque apenas se for uma refeição que normalmente teria salada.
+    Não coloque alimentos que não são tipicamente consumidos no Brasil.
+    Não coloque ovo cru, apenas se for cozido, mexido, omelete, etc.
+    Não coloque alimentos que não são tipicamente consumidos no Brasil.
+
     """
     print(f"\nPrompt final enviado para a LLM:\n{prompt}")
     
@@ -111,3 +123,5 @@ pergunta_para_llm = personaA.gerar_pergunta()
 
 # 4. Chamar a função principal que executa tudo
 resposta_da_dieta = responder(pergunta_para_llm, queries_para_llm)
+
+print(personaA.calcular_gasto_energetico_total())

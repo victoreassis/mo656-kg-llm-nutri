@@ -94,4 +94,4 @@ class Persona:
         refeicoes_map = {"cafe_da_manha": "Café da Manhã", "lanche_da_manha": "Lanche da Manhã", "almoco": "Almoço", "lanche_da_tarde": "Lanche da Tarde", "jantar": "Jantar", "ceia": "Ceia"}
         refeicoes_dict = self._definir_distribuicao_calorica()
         refeicoes_str = ", ".join([f"{refeicoes_map[nome]} com aproximadamente {int(cal)} kcal" for nome, cal in refeicoes_dict.items()])
-        return f"""Gere um plano alimentar para uma pessoa com as seguintes informações: {self.peso} kg, {self.idade} anos, {self.altura} m, sexo {self.sexo}, nível de atividade física {self.nivel_atividade_fisica} e objetivo de {self.objetivo}. A dieta deve ter {self.quantidade_refeicoes} refeições: {refeicoes_str}."""
+        return f"""Gere um plano alimentar para uma pessoa com as seguintes informações: {self.peso} kg, {self.idade} anos, {self.altura} m, sexo {self.sexo}, nível de atividade física {self.nivel_atividade_fisica} e objetivo de {self.objetivo}. A dieta deve ter {self.quantidade_refeicoes} refeições: {refeicoes_str}, gasto energético total de {int(self.calcular_gasto_energetico_total())} kcal."""
