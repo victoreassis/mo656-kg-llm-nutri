@@ -48,29 +48,38 @@ class Persona:
             PREFIX taco: <http://mo656/taco/>
             PREFIX tbca: <http://mo656/tbca/>
 
-            SELECT ?label ?energiaKcal ?fonte ?grupoLabel
-            WHERE {{
+            SELECT * WHERE
+            {{
                 {{
-                    ?alimento a taco:Alimento ; 
-                        rdfs:label ?label ; 
-                        taco:energiaKcal ?energiaKcal ; 
-                        taco:pertenceAoGrupo ?grupoURI.
-                    ?grupoURI rdfs:label ?grupoLabel .
-                    BIND("taco" AS ?fonte)
+                    SELECT ?label ?energiaKcal ?fonte ?grupoLabel
+                    WHERE {{
+                        ?alimento a taco:Alimento ; 
+                            rdfs:label ?label ; 
+                            taco:energiaKcal ?energiaKcal ; 
+                            taco:pertenceAoGrupo ?grupoURI.
+                        ?grupoURI rdfs:label ?grupoLabel .
+                        BIND("taco" AS ?fonte)                
+                    }}
+                    ORDER BY RAND()
+                    LIMIT {limite}
                 }}
                 UNION
                 {{
-                    ?alimento a tbca:Alimento ;
-                        rdfs:label ?label ;
-                        tbca:energiaKcal ?energiaKcal ;
-                        tbca:pertenceAoGrupo ?grupoURI .
-                    ?grupoURI rdfs:label ?grupoLabel .
-                    BIND("tbca" AS ?fonte)
+                    SELECT ?label ?energiaKcal ?fonte ?grupoLabel
+                    WHERE {{
+                        ?alimento a tbca:Alimento ;
+                            rdfs:label ?label ;
+                            tbca:energiaKcal ?energiaKcal ;
+                            tbca:pertenceAoGrupo ?grupoURI .
+                        ?grupoURI rdfs:label ?grupoLabel .
+                        {filtro_saude}
+                        BIND("tbca" AS ?fonte)
+                    }}
+                    ORDER BY RAND()
+                    LIMIT {limite}
                 }}
-                {filtro_saude}
             }}
-            ORDER BY ASC(?fonte) RAND()
-            LIMIT {limite}
+            ORDER BY RAND()
         """
 
         return query
