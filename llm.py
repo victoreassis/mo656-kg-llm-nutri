@@ -13,9 +13,12 @@ GROQ_TOKEN = os.getenv("GROQ_TOKEN") # Forma mais segura de carregar a chave
 #GROQ_TOKEN = "gsk_your_groq_api_token_here"
 client = Groq(api_key=GROQ_TOKEN)
 
+# O diretório do script atual
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
 # Carrega o grafo unificado
 g = Graph()
-g.parse(os.path.abspath("C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\grafo_unificado.ttl"), format="turtle")
+g.parse(os.path.join(script_dir, "grafo_unificado.ttl"), format="turtle")
 
 # --- FUNÇÕES AUXILIARES ---
 def executar_sparql(query):
