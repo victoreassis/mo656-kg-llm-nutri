@@ -22,7 +22,8 @@ class Persona:
             elif self.nivel_atividade_fisica == "pouco ativo": fator_atividade = 575.77-(7.01*self.idade)+(6.60*self.altura*100)+(12.14*self.peso)
             elif self.nivel_atividade_fisica == "ativo": fator_atividade = 710.25-(7.01*self.idade)+(6.54*self.altura*100)+(12.34*self.peso)
             else: fator_atividade = 511.83-(7.01*self.idade)+(9.07*self.altura*100)+(12.56*self.peso)
-        return fator_atividade
+        return fator_atividade  
+
     def _definir_distribuicao_calorica(self):
         get = self.calcular_gasto_energetico_total()
         if self.quantidade_refeicoes == 3: return {"cafe_da_manha": get * 0.30, "almoco": get * 0.40, "jantar": get * 0.30}
@@ -41,8 +42,7 @@ class Persona:
         }
         grupos_selecionados = grupos_por_refeicao.get(nome_refeicao, [])
         filtro_grupos_values = "VALUES ?grupoLabel { " + " ".join(f'"{g}"' for g in grupos_selecionados) + " }"
-        
-       
+
         query = f"""
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX taco: <http://mo656/taco/>
@@ -50,19 +50,21 @@ class Persona:
 
             SELECT ?label ?energiaKcal ?fonte ?grupoLabel
             WHERE {{
-                {filtro_grupos_values}
                 {{
                     ?alimento a taco:Alimento ; 
                         rdfs:label ?label ; 
                         taco:energiaKcal ?energiaKcal ; 
                         taco:pertenceAoGrupo ?grupoURI.
-                    ?grupoURI rdfs:label ?grupoLabel.
+                    ?grupoURI rdfs:label ?grupoLabel .
                     BIND("taco" AS ?fonte)
                 }}
                 UNION
                 {{
-                    ?alimento a tbca:Alimento ; rdfs:label ?label ; tbca:energiaKcal ?energiaKcal ; tbca:pertenceAoGrupo ?grupoURI.
-                    ?grupoURI rdfs:label ?grupoLabel.
+                    ?alimento a tbca:Alimento ;
+                        rdfs:label ?label ;
+                        tbca:energiaKcal ?energiaKcal ;
+                        tbca:pertenceAoGrupo ?grupoURI .
+                    ?grupoURI rdfs:label ?grupoLabel .
                     BIND("tbca" AS ?fonte)
                 }}
                 {filtro_saude}

@@ -5,25 +5,26 @@ from groq import Groq
 from dotenv import load_dotenv
 import os
 from persona import Persona # Importa a classe do outro arquivo
+import traceback
 
 # --- SETUP INICIAL ---
 load_dotenv()
-# GROQ_TOKEN = os.getenv("GROQ_API_KEY") # Forma mais segura de carregar a chave
-GROQ_TOKEN = "gsk_your_groq_api_token_here"
+GROQ_TOKEN = os.getenv("GROQ_TOKEN") # Forma mais segura de carregar a chave
+#GROQ_TOKEN = "gsk_your_groq_api_token_here"
 client = Groq(api_key=GROQ_TOKEN)
 
 # Carrega o grafo unificado
 g = Graph()
-g.parse("C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\grafo_unificado.ttl", format="turtle")
+g.parse(os.path.abspath("grafo_unificado.ttl"), format="turtle")
 
 # --- FUNÇÕES AUXILIARES ---
 def executar_sparql(query):
     try:
         results = g.query(query)
-        # MELHORIA: Retorna uma lista de dicionários, mais fácil de usar
-        return [dict(row.items()) for row in results]
+        return list(results)
     except Exception as e:
         print(f"ERRO na query SPARQL: {e}")
+        print(traceback.format_exc())
         return []
 
 def formatar_contexto_refeicoes(refeicoes_dict: dict) -> str:
