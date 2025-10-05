@@ -41,7 +41,7 @@ class Persona:
             "ceia": ["Frutas e derivados", "Leite e derivados"]
         }
         grupos_selecionados = grupos_por_refeicao.get(nome_refeicao, [])
-        filtro_grupos_values = "VALUES ?grupoLabel { " + " ".join(f'"{g}"' for g in grupos_selecionados) + " }"
+        filtro_grupos_alimentares = f"FILTER (STR(?grupoLabel) IN ({', '.join(f'"{g}"' for g in grupos_selecionados)}))"
 
         query = f"""
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -58,7 +58,8 @@ class Persona:
                             taco:energiaKcal ?energiaKcal ; 
                             taco:pertenceAoGrupo ?grupoURI.
                         ?grupoURI rdfs:label ?grupoLabel .
-                        BIND("taco" AS ?fonte)                
+                        {filtro_grupos_alimentares}
+                        BIND("taco" AS ?fonte)
                     }}
                     ORDER BY RAND()
                     LIMIT {limite}
@@ -72,6 +73,7 @@ class Persona:
                             tbca:energiaKcal ?energiaKcal ;
                             tbca:pertenceAoGrupo ?grupoURI .
                         ?grupoURI rdfs:label ?grupoLabel .
+                        {filtro_grupos_alimentares}
                         {filtro_saude}
                         BIND("tbca" AS ?fonte)
                     }}
