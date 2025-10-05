@@ -99,6 +99,12 @@ def responder(pergunta, queries_refeicoes):
     Não coloque alimentos que não são tipicamente consumidos no Brasil.
     Não coloque ovo cru, apenas se for cozido, mexido, omelete, etc.
     Não coloque alimentos que não são tipicamente consumidos no Brasil.
+    NÃO COLOQUE ALIMENTOS EM SEU ESTADO CRU, COMO CARNE CRUA, PEIXE CRU, OVOS CRUS, PASTEL CRU.
+    coloque apenas uma carne por almoço ou jantar, como frango, carne bovina, peixe, etc.
+    no café da manhã, lanche ou ceia se for colocar carne, apenas frango, ou carne bovina moída.
+    Não coloque pão de queijo no almoço ou jantar.
+    Não coloque sal como alimento.
+    NÃO COLOQUE ULTRAPROCESSADOS, COMO REFRIGERANTE, CHOCOLATE, SORVETE, PIZZA, HAMBÚRGUER, BATATA FRITA, SALGADINHOS, DOCES, BOLOS.
 
     """
     print(f"\nPrompt final enviado para a LLM:\n{prompt}")
@@ -109,7 +115,7 @@ def responder(pergunta, queries_refeicoes):
         temperature=0
     )
     resposta = chat_completion.choices[0].message.content.strip()
-    print("\n🤖 Resposta final:", resposta)
+    print("\n🤖 Resposta final:\n", resposta)
     return resposta
 
 
