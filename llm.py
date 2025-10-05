@@ -133,4 +133,4 @@ pergunta_para_llm = personaA.gerar_pergunta()
 # 4. Chamar a função principal que executa tudo
 resposta_da_dieta = responder(pergunta_para_llm, queries_para_llm)
 
-print(personaA.calcular_gasto_energetico_total())
+print(f"Gasto energético total da personaA: {personaA.calcular_gasto_energetico_total()} kcal")
