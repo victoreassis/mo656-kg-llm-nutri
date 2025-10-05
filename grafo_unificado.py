@@ -25,9 +25,9 @@ def padronizar_nome(texto_original, tipo='classe'):
 # ==============================================================================
 print("Iniciando a união dos grafos taco.ttl e tbca.ttl...")
 
-taco_file = "C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\taco.ttl"
-tbca_file = "C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\tbca.ttl"
-output_file = "C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\grafo_unificado.ttl"
+taco_file = "taco.ttl"
+tbca_file = "tbca.ttl"
+output_file = "grafo_unificado.ttl"
 
 
 g_unificado = Graph()

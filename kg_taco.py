@@ -1,10 +1,8 @@
 import pandas as pd
 from rdflib import Graph, Literal, RDF, RDFS, Namespace, URIRef, XSD, OWL
 import os
-import urllib.parse
 import unicodedata
 import re
-
 
 def padronizar_nome(texto_original, tipo='propriedade'):
     if not isinstance(texto_original, str): return ""
@@ -18,11 +16,10 @@ def padronizar_nome(texto_original, tipo='propriedade'):
     elif tipo == 'propriedade': return nome_upper_camel[0].lower() + nome_upper_camel[1:]
     else: return nome_upper_camel
 
-
-if not os.path.exists("C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\taco.ttl"):
+if not os.path.exists("taco.ttl"):
     print("Arquivo de grafo não encontrado. Iniciando a criação...")
 
-    file_path = "C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\taco_tratada.xlsx"
+    file_path = "taco_tratada.xlsx"
     
     try:
         # Lendo o Excel e usando a primeira linha como cabeçalho (padrão)
@@ -64,7 +61,6 @@ if not os.path.exists("C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nu
         g.add((propriedade_uri, RDF.type, OWL.DatatypeProperty))
         g.add((propriedade_uri, RDFS.label, Literal(nutriente_nome)))
 
-   
     grupo_atual_uri = None
     print("\nIniciando processamento das linhas da planilha...")
     for index, row in df.iterrows():
@@ -97,9 +93,8 @@ if not os.path.exists("C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nu
                         g.add((alimento_uri, TACO[nutriente_coluna], Literal(valor_numerico, datatype=XSD.decimal)))
                     except (ValueError, TypeError): pass
 
-
     print("\nSerializando o grafo para o arquivo 'grafo_taco_final.ttl'...")
-    g.serialize(destination="C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\taco.ttl", format="turtle")
+    g.serialize(destination="taco.ttl", format="turtle")
     print("Grafo criado com sucesso!")
 
 else:
@@ -107,25 +102,5 @@ else:
 
 # Carregar grafo salvo
 g = Graph()
-g.parse("C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\taco.ttl", format="turtle")
+g.parse("taco.ttl", format="turtle")
 
-
-#consultar grafo com SPARQL
-consulta = """ PREFIX ns1: <http://mo656/taco/>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-
-SELECT ?alimento ?potassio
-WHERE {
-    ?alimento ns1:perteneceAoGrupo ns1:frutas_e_derivados .
-    ?alimento ns1:Potássio_mg ?potassio .
-    FILTER (?potassio > 400)
-}
-"""
-
-resultado = g.query(consulta)
-print("Resultados da consulta:")
-for row in resultado:
-    print(f"Alimento: {row.alimento}, Potássio (mg): {row.potassio}")
-
-exit(0)

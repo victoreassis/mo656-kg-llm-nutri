@@ -22,7 +22,7 @@ def padronizar_nome(texto_original, tipo='propriedade'):
 # --- 2. SETUP DO GRAFO E CARREGAMENTO DE DADOS ---
 # ==============================================================================
 try:
-    with open("C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\output.json", "r", encoding="utf-8") as f:
+    with open("output.json", "r", encoding="utf-8") as f:
         data = json.load(f)
 except FileNotFoundError:
     print("ERRO: Arquivo 'output.json' não encontrado. Verifique o nome e o caminho.")
@@ -100,7 +100,7 @@ for alimento in data:
 # ==============================================================================
 # --- 4. SALVAR O GRAFO ---
 # ==============================================================================
-output_file = "C:\\Users\\Jacson\\Desktop\\websemantica\\mo656-kg-llm-nutri\\tbca1.ttl"
+output_file = "tbca1.ttl"
 g.serialize(destination=output_file, format="turtle")
 
 print(f"\nArquivo '{output_file}' (com esquema TACO) gerado com sucesso!")
