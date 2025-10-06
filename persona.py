@@ -41,7 +41,7 @@ class Persona:
             "ceia": ["Frutas e derivados", "Leite e derivados"]
         }
         grupos_selecionados = grupos_por_refeicao.get(nome_refeicao, [])
-        filtro_grupos_alimentares = f"FILTER (STR(?grupoLabel) IN ({', '.join(f'"{g}"' for g in grupos_selecionados)}))"
+        filtro_grupos_alimentares = 'FILTER (STR(?grupoLabel) IN (' + ", ".join(f'"{g}"' for g in grupos_selecionados) + '))'
 
         query = f"""
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
