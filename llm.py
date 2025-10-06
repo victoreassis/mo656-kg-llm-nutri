@@ -10,7 +10,6 @@ import traceback
 # --- SETUP INICIAL ---
 load_dotenv()
 GROQ_TOKEN = os.getenv("GROQ_TOKEN") # Forma mais segura de carregar a chave
-#GROQ_TOKEN = "gsk_your_groq_api_token_here"
 client = Groq(api_key=GROQ_TOKEN)
 
 # O diretório do script atual
@@ -103,6 +102,8 @@ def responder(pergunta, queries_refeicoes):
     coloque apenas uma carne por almoço ou jantar, como frango, carne bovina, peixe, etc.
     no café da manhã, lanche ou ceia se for colocar carne, apenas frango, ou carne bovina moída.
     Não coloque pão de queijo no almoço ou jantar.
+    Não coloque arroz no café da manhã, lanche ou ceia
+    Não coloque feijão no café da manhã, lanche ou ceia
     Não coloque sal como alimento.
     NÃO COLOQUE ULTRAPROCESSADOS, COMO REFRIGERANTE, CHOCOLATE, SORVETE, PIZZA, HAMBÚRGUER, BATATA FRITA, SALGADINHOS, DOCES, BOLOS.
 
